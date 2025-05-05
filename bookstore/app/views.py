@@ -17,8 +17,52 @@ def index(req):
     return render(req, "index.html",context)
 
 
+from django.contrib import messages
+from django.contrib.auth.models import User
+
 def signup(req):
-    return render(req, "signup.html")
+    print(req.method)
+    if req.method=="POST":
+        print(req.method)
+        uname=req.POST.get('uname')
+        uemail=req.POST.get('uemail')
+        upass=req.POST.get('upass')
+        ucpass=req.POST.get('ucpass')
+        print(uname,uemail,upass,ucpass)
+        user=User.objects.values_list('username',flat=True)
+        print(user)
+        chkemail=user.objects.values_list('email',flat=True)
+        print(chkemail)
+        
+        if upass!=ucpass:
+            # errmsg="Password and Confirm Password doesn't match. Try again"
+            # context={'errmsg':errmsg}
+            # return render(req,'signup.html',context)
+
+            messages.error(req,"Password and Confirm Password doesn't match.TRY again ")
+            return render(req, "signup.html")
+        elif uname==upass:
+            messages.error(req," Username and Password be different")
+            return render(req, "signup.html")
+        elif uname in user:
+            messages.error(req," Username already exists. Try again")
+            return render(req, "signup.html")
+        elif uemail in chkemail:
+            messages.error(req," Email already exists")
+            return render(req, "signup.html")
+        
+        newuser=user.objects.create(username=uname,email=uemail,password=upass)
+        newuser.set_password()
+        newuser.save()
+        print(User.objects.all())
+
+        
+        messages.success(req,"Registration done Successfully!! ")
+        return render(req, "signin.html")
+        
+    else:
+        print(req.method)
+        return render(req, "signup.html")
 
 
 def signin(req):
