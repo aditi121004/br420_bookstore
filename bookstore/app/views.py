@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import Books
 
 
@@ -31,7 +31,7 @@ def signup(req):
         print(uname,uemail,upass,ucpass)
         user=User.objects.values_list('username',flat=True)
         print(user)
-        chkemail=user.objects.values_list('email',flat=True)
+        chkemail=User.objects.values_list('email',flat=True)
         print(chkemail)
         
         if upass!=ucpass:
@@ -51,8 +51,8 @@ def signup(req):
             messages.error(req," Email already exists")
             return render(req, "signup.html")
         
-        newuser=user.objects.create(username=uname,email=uemail,password=upass)
-        newuser.set_password()
+        newuser=User.objects.create(username=uname,email=uemail,password=upass)
+        newuser.set_password(upass)
         newuser.save()
         print(User.objects.all())
 
@@ -64,9 +64,42 @@ def signup(req):
         print(req.method)
         return render(req, "signup.html")
 
+from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth.hashers import check_password
 
 def signin(req):
-    return render(req, "signin.html")
+    if req.method=="POST":
+        # uname=req.POST.get("uname")
+        uemail=req.POST.get("uemail")
+        upass=req.POST.get("upass")
+        print(uemail,upass)
+        # userdata=User.objects.filter(email=uemail,password=upass) #incorrect way
+        # userdata=authenticate(username=uname,password=upass)
+        # print(userdata)
+       
+        try:
+            chkemail=User.objects.get(email=uemail)
+            print(chkemail)
+            if chkemail.check_password(upass) :
+                login(req,chkemail)
+                return render(req,'dashboard.html')
+            else:
+                messages.error(req,'Invalid email or password')
+                return render(req,'signin.html')
+        except User.DoesNotExist:
+            messages.error(req,'User Not exists')
+            return render(req,'signin.html')
+        
+    else:
+     return render(req, "signin.html")
+    
+
+def dashboard(req):
+    return render(req, "dashboard.html")
+
+def userlogout(req):
+    logout(req)
+    return redirect("/")
 
 
 def about(req):
